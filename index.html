@@ -1,0 +1,109 @@
+<!doctype html>
+<!-- Shell estático servido pelo GitHub Pages. Os dados vêm de ./data.json,
+     que o n8n reescreve a cada atualização (lendo a planilha de resultados). -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Matrix · Gêmeo do funil DMER</title>
+<style>
+  :root{ --navy:#0f1f3d; --navy2:#1b3260; --amber:#f2a900; --ink:#1c2330; --muted:#5b6677;
+         --line:#e6e9f0; --ok:#1f8a4c; --warn:#b8860b; --bg:#f6f8fc; }
+  *{ box-sizing:border-box } body{ margin:0; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+     color:var(--ink); background:var(--bg) }
+  .wrap{ max-width:920px; margin:0 auto; padding:24px 18px 40px }
+  header{ background:linear-gradient(135deg,var(--navy),var(--navy2)); color:#fff; border-radius:16px;
+          padding:22px 24px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap }
+  header h1{ font-size:18px; margin:0; font-weight:700; letter-spacing:.2px }
+  header .sub{ font-size:12.5px; opacity:.85; margin-top:4px }
+  .badge{ background:var(--amber); color:#3a2a00; font-weight:800; font-size:12px; letter-spacing:1px;
+          padding:6px 12px; border-radius:999px }
+  .banner{ margin:16px 0; padding:12px 16px; border-radius:12px; font-weight:600; font-size:14px;
+           background:#eef1f6; color:var(--muted); border:1px solid var(--line) }
+  .banner.ok{ background:#e7f6ed; color:var(--ok); border-color:#bce6cd }
+  .banner.warn{ background:#fdf4e1; color:var(--warn); border-color:#f0dba6 }
+  .hero{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:24px; margin-bottom:16px }
+  .hero .label{ font-size:12.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px }
+  .hero .big{ font-size:40px; font-weight:800; color:var(--navy); margin:6px 0 2px }
+  .hero .band{ font-size:14px; color:var(--muted) }
+  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px }
+  .card .k{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px }
+  .card .v{ font-size:20px; font-weight:700; color:var(--ink); margin-top:6px }
+  .card .n{ font-size:12px; color:var(--muted); margin-top:4px }
+  .meta{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 20px; margin-bottom:16px }
+  .meta h2{ font-size:14px; margin:0 0 12px; color:var(--navy) }
+  .meta .row{ display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--line); font-size:14px }
+  .meta .row:last-child{ border-bottom:0 }
+  footer{ font-size:12px; color:var(--muted); line-height:1.6; margin-top:8px }
+  @media(max-width:640px){ .grid{ grid-template-columns:repeat(2,1fr) } .hero .big{ font-size:32px } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Matrix · Gêmeo do funil DMER</h1>
+      <div class="sub">Empresa Júnior ADM UFBA · simulação interna · extrato <b id="extrato">—</b></div>
+    </div>
+    <span class="badge" id="rotulo">MODELADO</span>
+  </header>
+
+  <div class="banner" id="banner">Carregando…</div>
+
+  <div class="hero">
+    <div class="label">Faturamento forward 12m — mediana modelada</div>
+    <div class="big" id="forward">—</div>
+    <div class="band">faixa conforme ~80%: <b id="band">—</b> &nbsp;·&nbsp; P10–P90: <span id="p1090">—</span></div>
+  </div>
+
+  <div class="meta">
+    <h2>Meta de faturamento por nível de chance (modelado)</h2>
+    <div class="row"><span>50% de chance de bater</span><b id="m50">—</b></div>
+    <div class="row"><span>70% de chance de bater</span><b id="m70">—</b></div>
+    <div class="row"><span>80% de chance de bater</span><b id="m80">—</b></div>
+    <div class="row"><span>90% de chance de bater</span><b id="m90">—</b></div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="k">Conversão</div><div class="v" id="conv">—</div><div class="n" id="conv_n">—</div></div>
+    <div class="card"><div class="k">Ganho limpo</div><div class="v" id="ganho">—</div><div class="n" id="ganho_n">—</div></div>
+    <div class="card"><div class="k">Persistência 12m</div><div class="v" id="pers">—</div><div class="n">âncora (realizado)</div></div>
+    <div class="card"><div class="k">Frescor do dado</div><div class="v" id="fresh">—</div><div class="n">limite: 30 dias</div></div>
+  </div>
+
+  <footer>
+    Todos os números são <b>modelados</b> (semente <span id="seed">42</span>), sempre com faixa + n. Não interpretar como valor exato.
+    Escopo: <b>DMER</b> — não comparar com a meta da EJ. &nbsp;·&nbsp;
+    Gerado em <span id="updated">—</span> · fator conforme <span id="fator">—</span>.
+  </footer>
+</div>
+
+<script>
+  const brl = v => { const n = Number(String(v).replace(',', '.')); return isFinite(n) ? 'R$ ' + Math.round(n).toLocaleString('pt-BR') : (v || '—'); };
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  fetch('./data.json?_=' + Date.now()).then(r => r.json()).then(d => {
+    set('extrato', d.extrato || '—');
+    set('rotulo', String(d.rotulo || 'modelado').toUpperCase());
+    set('forward', brl(d.forward_mediana));
+    set('band', brl(d.conforme_lo) + ' – ' + brl(d.conforme_hi));
+    set('p1090', brl(d.forward_p10) + ' – ' + brl(d.forward_p90));
+    set('m50', brl(d.p_meta_50)); set('m70', brl(d.p_meta_70)); set('m80', brl(d.p_meta_80)); set('m90', brl(d.p_meta_90));
+    set('conv', (d.conversao_pct ?? '—') + '%');
+    set('conv_n', 'n = ' + (d.conversao_n_leads ?? '—') + ' leads · ' + (d.conversao_n_wins ?? '—') + ' wins');
+    set('ganho', d.n_ganho_limpo ?? '—'); set('ganho_n', 'de ' + (d.n_total ?? '—') + ' oportunidades');
+    set('pers', brl(d.persistence_12m)); set('fresh', (d.data_freshness_days ?? '—') + ' dias');
+    set('updated', d.gerado_em || '—'); set('seed', d.seed ?? 42); set('fator', d.conformal_factor ?? '—');
+    const ok = d.validation_ok === true || String(d.validation_ok).toLowerCase() === 'true';
+    const b = document.getElementById('banner');
+    b.className = 'banner ' + (ok ? 'ok' : 'warn');
+    b.textContent = ok ? '✓ Validado — persistência dentro da banda de 80%.'
+                       : '⚠ Interpretar com cuidado — não passou no firewall de validação.';
+  }).catch(() => {
+    const b = document.getElementById('banner');
+    b.className = 'banner warn'; b.textContent = 'Não foi possível carregar data.json.';
+  });
+</script>
+</body>
+</html>
